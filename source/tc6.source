@@ -1,0 +1,7 @@
+NLakes 4 MRivers 3 Start 0 Ocean 4
+KInitial 7 FMaxFat 7 CTimeLimit 4
+gains 0 0 0 0
+u v w
+0 1 1
+1 2 2
+2 3 3

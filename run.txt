@@ -1,0 +1,60 @@
+// Tests for Part A
+// Test 0: Simple Test
+./eel A test_cases/t1a-0.txt
+
+// Test 1: Loop Exit Test
+./eel A test_cases/t1a-1.txt
+
+// Test 2: Efficiency Test (Complete Graph)
+./eel A test_cases/t1a-2.txt
+
+// Test 3: Max Food Impact Test
+./eel A test_cases/t1a-3.txt
+
+// Tests 4 - 6: Time Boundary Tests
+./eel A test_cases/t1a-4.txt
+./eel A test_cases/t1a-5.txt
+./eel A test_cases/t1a-6.txt
+
+// Test 7: Lake Predators Impact Test
+./eel A test_cases/t1a-7.txt
+
+// Test 8: Broken Lake System
+./eel A test_cases/t1a-8.txt
+
+// Test 10: Upstream Only Impact Test
+./eel A test_cases/t1a-9.txt
+
+// Test 11: Negative Loop Impact Test
+./eel A test_cases/t1a-10.txt
+
+
+// Tests for Part B
+// Test 0: Simple Test
+./eel B test_cases/t1b-0.txt
+
+// Test 1: Loop Exit Test
+./eel B test_cases/t1b-1.txt
+
+// Test 2: Efficiency Test (Complete Graph)
+./eel B test_cases/t1b-2.txt
+
+// Test 3: Max Food Impact Test
+./eel B test_cases/t1b-3.txt
+
+// Tests 4 - 6: Time Boundary Tests
+./eel B test_cases/t1b-4.txt
+./eel B test_cases/t1b-5.txt
+./eel B test_cases/t1b-6.txt
+
+// Test 7: Lake Predators Impact Test
+./eel B test_cases/t1b-7.txt
+
+// Test 8: Broken Lake System
+./eel B test_cases/t1b-8.txt
+
+// Test 10: Upstream Only Impact Test
+./eel B test_cases/t1b-9.txt
+
+// Test 11: Negative Loop Impact Test
+./eel B test_cases/t1b-10.txt
