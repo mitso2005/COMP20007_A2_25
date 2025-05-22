@@ -9,6 +9,14 @@
 
 #define SENTINEL -1
 
+// Structure to store path information
+typedef struct {
+    int maxFat;
+    int prevLake;
+    int prevTime;
+    int prevFatLevel;
+} State;
+
 // This is a lake
 struct graphNode {
   int id;

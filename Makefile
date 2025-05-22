@@ -1,9 +1,11 @@
-eel: eel.o utils.o
-	gcc -Wall -o eel -g eel.o utils.o
+CC = gcc
+CFLAGS = -Wall -g
 
-eel.o: eel.c utils.h
-	gcc -c eel.c -Wall -g
+all: eel
 
-utils.o: utils.c utils.h
-	gcc -c utils.c -Wall -g
+eel: eel.c utils.c
+	$(CC) $(CFLAGS) -o eel eel.c utils.c
+
+clean:
+	rm -f eel
 
