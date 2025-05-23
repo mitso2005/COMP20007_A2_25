@@ -44,126 +44,117 @@ int main(int argc, char* argv[]) {
 }
 
 void swim(riverSystem coralSea, int timeSteps, int part) {
-    // State space: dp[lake][time][fat]
-    // - lake: current location (0 to numLakes-1)
-    // - time: remaining days (0 to timeSteps)
-    // - fat: current fat level (0 to maxFat)
-    State*** dp = malloc(coralSea.numLakes * sizeof(State**));
+    // dp[lake][time] = maximum fat achievable at this lake with this much time remaining
+    int** dp = malloc(coralSea.numLakes * sizeof(int*));
+    int** parent = malloc(coralSea.numLakes * sizeof(int*));
+    int** parentTime = malloc(coralSea.numLakes * sizeof(int*));
+    
     for (int i = 0; i < coralSea.numLakes; i++) {
-        dp[i] = malloc((timeSteps + 1) * sizeof(State*));
-        for (int j = 0; j <= timeSteps; j++) {
-            dp[i][j] = malloc((coralSea.maxFat + 1) * sizeof(State));
-            for (int k = 0; k <= coralSea.maxFat; k++) {
-                dp[i][j][k].maxFat = -1;  // Initialize as impossible
-                dp[i][j][k].prevLake = -1;
-            }
+        dp[i] = malloc((timeSteps + 1) * sizeof(int));
+        parent[i] = malloc((timeSteps + 1) * sizeof(int));
+        parentTime[i] = malloc((timeSteps + 1) * sizeof(int));
+        for (int t = 0; t <= timeSteps; t++) {
+            dp[i][t] = -1;  // -1 means impossible
+            parent[i][t] = -1;
+            parentTime[i][t] = -1;
         }
     }
-
-    // Initialize origin state with lake's fat gain
-    // Cap initial fat to prevent exceeding maximum capacity
-    int startFat = coralSea.initFat + coralSea.fatGains[coralSea.origin];
-    startFat = startFat > coralSea.maxFat ? coralSea.maxFat : startFat;
-    dp[coralSea.origin][timeSteps][startFat].maxFat = startFat;
-
-    // Bottom-up DP: Work backwards from timeSteps to find optimal paths
-    // For each possible state (lake, time, fat), try all possible transitions
-    for (int time = timeSteps; time > 0; time--) {
+    
+    // Initialize: start at origin with just the initial fat
+    // Do NOT add origin's fat gain here - only when we arrive at origin later
+    if (coralSea.initFat > 0) {
+        dp[coralSea.origin][timeSteps] = coralSea.initFat;
+    }
+    
+    // Dynamic programming: process in reverse time order
+    for (int time = timeSteps; time >= 1; time--) {
         for (int lake = 0; lake < coralSea.numLakes; lake++) {
-            for (int fat = 0; fat <= coralSea.maxFat; fat++) {
-                // Skip unreachable states
-                if (dp[lake][time][fat].maxFat == -1) continue;
-
-                // Try all possible river transitions from current lake
-                for (int i = 0; coralSea.lakes[lake][i].id != SENTINEL; i++) {
-                    struct graphNode nextLake = coralSea.lakes[lake][i];
-                    int riverCost = nextLake.cost_to_arrive;
-                    
-                    // Validate transition constraints:
-                    // 1. Must have enough fat to traverse river
-                    if (fat < riverCost) continue;
-
-                    // Calculate time cost based on part
-                    int timeCost;
-                    if (part == PART_A) {
-                        timeCost = 1;  // Part A: Fixed 1 day per river
-                    } else {
-                        timeCost = riverCost;  // Part B: Time = fat cost
-                    }
-                    
-                    // 3. Must have enough remaining time
-                    if (time - timeCost < 0) continue;
-                    
-                    // Calculate new state after transition:
-                    // - Subtract river traversal cost
-                    // - Add/subtract lake's fat effect
-                    int newFat = fat - riverCost;
-                    newFat += coralSea.fatGains[nextLake.id];
-                    
-                    // Skip if fat would drop to 0 or below
-                    if (newFat <= 0) continue;
-                    // Cap fat at maximum allowed
-                    if (newFat > coralSea.maxFat) newFat = coralSea.maxFat;
-                    
-                    // Update if better solution found
-                    if (dp[nextLake.id][time-timeCost][newFat].maxFat < newFat) {
-                        dp[nextLake.id][time-timeCost][newFat].maxFat = newFat;
-                        dp[nextLake.id][time-timeCost][newFat].prevLake = lake;
-                        dp[nextLake.id][time-timeCost][newFat].prevTime = time;
-                        dp[nextLake.id][time-timeCost][newFat].prevFatLevel = fat;
-                    }
+            if (dp[lake][time] == -1) continue;
+            
+            int currentFat = dp[lake][time];
+            
+            // Try all neighbors
+            for (int i = 0; coralSea.lakes[lake][i].id != SENTINEL; i++) {
+                int nextLake = coralSea.lakes[lake][i].id;
+                int travelCost = coralSea.lakes[lake][i].cost_to_arrive;
+                int timeCost = (part == PART_A) ? 1 : travelCost;
+                
+                // Check constraints
+                if (time < timeCost) continue;  // Not enough time
+                if (currentFat <= travelCost) continue;  // Not enough fat to survive travel
+                
+                // Calculate resulting state
+                int timeAfter = time - timeCost;
+                int fatAfterTravel = currentFat - travelCost;
+                int fatAfterEating = fatAfterTravel + coralSea.fatGains[nextLake];
+                
+                // Check if we die from eating (or negative fat gain)
+                if (fatAfterEating <= 0) continue;
+                
+                // Cap at maximum fat
+                if (fatAfterEating > coralSea.maxFat) {
+                    fatAfterEating = coralSea.maxFat;
+                }
+                
+                // Update if better (higher fat, or same fat but we prefer earlier arrival times)
+                if (dp[nextLake][timeAfter] < fatAfterEating) {
+                    dp[nextLake][timeAfter] = fatAfterEating;
+                    parent[nextLake][timeAfter] = lake;
+                    parentTime[nextLake][timeAfter] = time;
                 }
             }
         }
     }
-
-    // Find best result at ocean
+    
+    // Find the best solution at destination
     int bestFat = -1;
-    int bestTime = 0;
-    int bestFatLevel = 0;
+    int bestTime = -1;
+    
+    // Check all possible arrival times, prefer earlier arrival for same fat
     for (int time = 0; time <= timeSteps; time++) {
-        for (int fat = 0; fat <= coralSea.maxFat; fat++) {
-            if (dp[coralSea.dest][time][fat].maxFat > bestFat) {
-                bestFat = dp[coralSea.dest][time][fat].maxFat;
-                bestTime = time;
-                bestFatLevel = fat;
-            }
+        if (dp[coralSea.dest][time] > bestFat) {
+            bestFat = dp[coralSea.dest][time];
+            bestTime = time;
         }
     }
-
+    
     if (bestFat == -1) {
-        printf("No Path :(\n");  // Fix case sensitivity
+        printf("No Path :(\n");
     } else {
         // Reconstruct path
-        int* path = malloc(timeSteps * sizeof(int));
+        int* path = malloc((timeSteps + 1) * sizeof(int));
         int pathLen = 0;
+        
         int currLake = coralSea.dest;
         int currTime = bestTime;
-        int currFat = bestFatLevel;
-
+        
         while (currLake != -1) {
             path[pathLen++] = currLake;
-            State prevState = dp[currLake][currTime][currFat];
-            currLake = prevState.prevLake;
-            currTime = prevState.prevTime;
-            currFat = prevState.prevFatLevel;
+            int prevLake = parent[currLake][currTime];
+            int prevTime = parentTime[currLake][currTime];
+            currLake = prevLake;
+            currTime = prevTime;
         }
-
+        
         printf("Max Fat: %d\nPath: ", bestFat);
         for (int i = pathLen - 1; i >= 0; i--) {
-            printf("%d%s", path[i], i > 0 ? ", " : "\n");
+            printf("%d", path[i]);
+            if (i > 0) printf(", ");
         }
+        printf("\n");
+        
         free(path);
     }
-
-    // Free memory
+    
+    // Clean up
     for (int i = 0; i < coralSea.numLakes; i++) {
-        for (int j = 0; j <= timeSteps; j++) {
-            free(dp[i][j]);
-        }
         free(dp[i]);
+        free(parent[i]);
+        free(parentTime[i]);
     }
     free(dp);
+    free(parent);
+    free(parentTime);
 }
 
 /* =====================================================================

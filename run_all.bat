@@ -12,3 +12,4 @@ echo Compilation successful!
 echo.
 echo Running tests...
 call compare_outputs.bat
+  
