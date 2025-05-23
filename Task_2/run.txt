@@ -1,0 +1,88 @@
+
+// definitely not in the list birds
+./birds B datafiles/t2a_data_1.txt test_cases/t2_0.txt
+
+// Part A Test Cases
+./birds B datafiles/t2a_data_1.txt test_cases/t2_1.txt
+./birds B datafiles/t2a_data_10.txt test_cases/t2_1.txt
+./birds B datafiles/t2a_data_200.txt test_cases/t2_1.txt
+./birds B datafiles/t2a_data_500.txt test_cases/t2_1.txt
+./birds B datafiles/t2a_data_2000.txt test_cases/t2_1.txt
+./birds B datafiles/t2a_data_11145.txt test_cases/t2_1.txt
+./birds B datafiles/t2a_data_200.txt test_cases/t2_2.txt
+./birds B datafiles/t2a_data_500.txt test_cases/t2_2.txt
+./birds B datafiles/t2a_data_2000.txt test_cases/t2_2.txt
+./birds B datafiles/t2a_data_11145.txt test_cases/t2_2.txt
+
+// part B test cases
+
+./birds C datafiles/t2b_data_1.txt test_cases/t2_1.txt delete_cases/t2_delete_1.txt
+./birds C datafiles/t2b_data_10.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt
+./birds C datafiles/t2b_data_11.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt
+
+// Overflow case
+./birds C datafiles/t2b_data_22.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt
+
+./birds C datafiles/t2b_data_24.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt
+./birds C datafiles/t2b_data_200.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt
+./birds C datafiles/t2b_data_24.txt test_cases/t2_2.txt delete_cases/t2_delete_20.txt
+./birds C datafiles/t2b_data_200.txt test_cases/t2_2.txt delete_cases/t2_delete_20.txt
+
+
+// part D test cases
+
+// Insertion tests
+./birds D datafiles/t2d_data_5.txt test_cases/t2_1.txt delete_cases/t2_delete_1.txt
+./birds D datafiles/t2d_data_6.txt test_cases/t2_1.txt delete_cases/t2_delete_1.txt
+
+// Check tests
+./birds D datafiles/t2d_data_50.txt test_cases/t2_2.txt delete_cases/t2_delete_1.txt
+./birds D datafiles/t2d_data_70.txt test_cases/t2_2.txt delete_cases/t2_delete_1.txt
+./birds D datafiles/t2d_data_100.txt test_cases/t2_2.txt delete_cases/t2_delete_1.txt
+
+// Deletion Tests - d10
+./birds D datafiles/t2d_data_50.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt
+./birds D datafiles/t2d_data_70.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt
+./birds D datafiles/t2d_data_100.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt
+
+
+// Deletion tests - d20
+./birds D datafiles/t2d_data_50.txt test_cases/t2_1.txt delete_cases/t2_delete_20.txt
+./birds D datafiles/t2d_data_70.txt test_cases/t2_1.txt delete_cases/t2_delete_20.txt
+./birds D datafiles/t2d_data_100.txt test_cases/t2_1.txt delete_cases/t2_delete_20.txt
+
+
+// To create all files:
+./birds B datafiles/t2a_data_1.txt test_cases/t2_0.txt > output/test1.txt
+./birds B datafiles/t2a_data_1.txt test_cases/t2_1.txt > output/test2.txt
+./birds B datafiles/t2a_data_10.txt test_cases/t2_1.txt > output/test3.txt
+./birds B datafiles/t2a_data_200.txt test_cases/t2_1.txt > output/test4.txt
+./birds B datafiles/t2a_data_500.txt test_cases/t2_1.txt > output/test5.txt
+./birds B datafiles/t2a_data_2000.txt test_cases/t2_1.txt > output/test6.txt
+./birds B datafiles/t2a_data_11145.txt test_cases/t2_1.txt > output/test7.txt
+./birds B datafiles/t2a_data_200.txt test_cases/t2_2.txt > output/test8.txt
+./birds B datafiles/t2a_data_500.txt test_cases/t2_2.txt > output/test9.txt
+./birds B datafiles/t2a_data_2000.txt test_cases/t2_2.txt > output/test10.txt
+./birds B datafiles/t2a_data_11145.txt test_cases/t2_2.txt > output/test11.txt
+./birds C datafiles/t2b_data_1.txt test_cases/t2_1.txt delete_cases/t2_delete_1.txt > output/test12.txt
+./birds C datafiles/t2b_data_10.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt > output/test13.txt
+./birds C datafiles/t2b_data_11.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt > output/test14.txt
+./birds C datafiles/t2b_data_22.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt > output/test15.txt
+./birds C datafiles/t2b_data_24.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt > output/test16.txt
+./birds C datafiles/t2b_data_200.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt > output/test17.txt
+./birds C datafiles/t2b_data_24.txt test_cases/t2_2.txt delete_cases/t2_delete_20.txt > output/test18.txt
+./birds C datafiles/t2b_data_200.txt test_cases/t2_2.txt delete_cases/t2_delete_20.txt > output/test19.txt
+./birds D datafiles/t2d_data_5.txt test_cases/t2_1.txt delete_cases/t2_delete_1.txt > output/test20.txt
+./birds D datafiles/t2d_data_6.txt test_cases/t2_1.txt delete_cases/t2_delete_1.txt > output/test21.txt
+./birds D datafiles/t2d_data_50.txt test_cases/t2_2.txt delete_cases/t2_delete_1.txt > output/test22.txt 
+./birds D datafiles/t2d_data_70.txt test_cases/t2_2.txt delete_cases/t2_delete_1.txt > output/test23.txt
+./birds D datafiles/t2d_data_100.txt test_cases/t2_2.txt delete_cases/t2_delete_1.txt > output/test24.txt 
+./birds D datafiles/t2d_data_50.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt > output/test25.txt
+./birds D datafiles/t2d_data_70.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt > output/test26.txt
+./birds D datafiles/t2d_data_100.txt test_cases/t2_1.txt delete_cases/t2_delete_10.txt > output/test27.txt 
+./birds D datafiles/t2d_data_50.txt test_cases/t2_1.txt delete_cases/t2_delete_20.txt > output/test28.txt
+./birds D datafiles/t2d_data_70.txt test_cases/t2_1.txt delete_cases/t2_delete_20.txt > output/test29.txt
+./birds D datafiles/t2d_data_100.txt test_cases/t2_1.txt delete_cases/t2_delete_20.txt > output/test30.txt
+
+
+
