@@ -49,29 +49,16 @@ typedef struct dynamicBFNode dbfNode;
 static dbfNode* createNewNode(int capacity, double fp_rate) {
     dbfNode* node = malloc(sizeof(dbfNode));
     assert(node);
-    
-    // Initialize filter
     node->filter = malloc(sizeof(bf));
     node->filter->bfBits = calc_m(capacity, fp_rate) * BUCKET_SIZE;
     node->filter->fp_rate = fp_rate;
     node->filter->numBirds = 0;
     unsigned int numInts = (node->filter->bfBits + 31) / 32;
     node->filter->arr = calloc(numInts, sizeof(unsigned int));
-    
-    // Initialize node fields
     node->currentBirds = 0;
     node->maxCapacity = capacity;
     node->birdNames = malloc(capacity * sizeof(char*));
     node->next = NULL;
-
-    // Initialize tracking fields
-    node->bird_count = 0;
-    node->first_bird = NULL;
-    node->last_bird = NULL;
-
-    // Initialize the bit array properly
-    initBits(node->filter->arr, node->filter->bfBits);
-    
     return node;
 }
 
@@ -125,30 +112,19 @@ int addDBF(bf* birds_bf, char* nextName, unsigned int* hashNum) {
     if (!birds->head) {
         birds->head = createNewNode(birds->maxBirds, birds->fp_rate);
     }
-
-    // Check if bird already exists in any filter
-    if (findBirdNode(birds, nextName)) {
-        return 0;  // Bird already exists, no need to add again
-    }
-
-    // Get the last filter
+    // Always insert into the last filter
     dbfNode* node = birds->head;
     while (node->next) {
         node = node->next;
     }
-
-    // If current filter is full, create new one
+    // If current filter is full, create a new filter and insert into that
     if (node->currentBirds >= node->maxCapacity) {
         node->next = createNewNode(birds->maxBirds, birds->fp_rate);
         node = node->next;
     }
-
-    // Try to add to current filter
     if (addCBF(node->filter, nextName, hashNum)) {
-        return 1;  // Overflow occurred
+        return 1; // Overflow occurred
     }
-
-    // Add to tracking array
     node->birdNames[node->currentBirds] = strdup(nextName);
     node->currentBirds++;
     node->filter->numBirds++;
@@ -179,25 +155,44 @@ int birdDeleteDBF(bf* birds_bf, char* nextName, unsigned int* hashNum) {
 
 // Count how many times a bird has been seen in the DBF
 int dbfCount(dbf* birds, char* nextName, unsigned int hashNum) {
-    // First find which filter contains this bird
-    dbfNode* node = findBirdNode(birds, nextName);
-    if (!node) {
-        return 0;  // Bird not found in any filter
-    }
-
-    // Only count in the filter where the bird is actually stored
+    dbfNode* curr = birds->head;
+    int totalCount = 0;
     unsigned int hashes[hashNum];
-    uh1(nextName, node->filter->bfBits / BUCKET_SIZE, hashNum, hashes);
-    int min_count = (1 << BUCKET_SIZE);
 
-    for (int i = 0; i < hashNum; i++) {
-        int count = countBucket(node->filter->arr, hashes[i]);
-        if (count < min_count) {
-            min_count = count;
-            if (min_count == 0) break;
+    while (curr != NULL) {
+        // If filter has defined range
+        if (curr->last_bird) {
+            if (strcmp(nextName, curr->first_bird) >= 0 && strcmp(nextName, curr->last_bird) <= 0) {
+                uh1(nextName, curr->filter->bfBits / BUCKET_SIZE, hashNum, hashes);
+                int min_count = (1 << BUCKET_SIZE);
+
+                for (int i = 0; i < hashNum; i++) {
+                    int count = countBucket(curr->filter->arr, hashes[i]);
+                    if (count < min_count) {
+                        min_count = count;
+                        if (min_count == 0) break;
+                    }
+                }
+                totalCount += min_count;
+            }
         }
+        // Check last filter without upper bound
+        else if (curr->next == NULL && strcmp(nextName, curr->first_bird) >= 0) {
+            uh1(nextName, curr->filter->bfBits / BUCKET_SIZE, hashNum, hashes);
+            int min_count = (1 << BUCKET_SIZE);
+
+            for (int i = 0; i < hashNum; i++) {
+                int count = countBucket(curr->filter->arr, hashes[i]);
+                if (count < min_count) {
+                    min_count = count;
+                    if (min_count == 0) break;
+                }
+            }
+            totalCount += min_count;
+        }
+        curr = curr->next;
     }
-    return min_count;
+    return totalCount;
 }
 
 // Check if a bird is in a specific Bloom Filter

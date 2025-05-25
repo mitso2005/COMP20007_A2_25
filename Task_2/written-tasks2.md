@@ -41,3 +41,71 @@ Let:
 
 ### Overall Impact
 The modification from Part A to Part B introduces a factor of c to both space complexity and update operations (insert/delete), while maintaining the same query complexity. The practical impact depends on the chosen value of c, with c = 4 being common but potentially insufficient for some applications requiring higher counts.
+
+# Task 2 Part E: Dynamic Bloom Filter Analysis
+
+## Complexity Changes from Basic to Dynamic Bloom Filter
+
+The transition from a basic Bloom filter to a dynamic Bloom filter introduces several significant changes in complexity:
+
+### Space Complexity
+- Basic Bloom Filter: O(m) bits where m is the number of buckets
+- Dynamic Bloom Filter: O(s * m * c) where:
+  - s is the number of filters
+  - m is the number of buckets per filter
+  - c is bits per counter (constant)
+The space complexity increases linearly with the number of filters, but this allows for unlimited growth.
+
+### Time Complexity
+- Insertion: O(k) → O(k)
+  - Remains constant as we only insert into the latest filter
+  - Filter creation (O(1)) amortized over insertions
+- Lookup: O(k) → O(k + s)
+  - Must check O(s) filters in worst case
+  - Each filter requires O(k) hash computations
+  - Using birdNames array for O(s) tracking improves average case
+- Deletion: O(k) → O(k + s)
+  - O(s) to find the correct filter using birdNames array
+  - O(k) to perform the actual deletion in that filter
+
+### Implementation of O(k + s) Deletion
+Our implementation achieves O(k + s) deletion by:
+1. Using an O(s) space birdNames array to track which filter contains each bird
+2. Finding the correct filter in O(s) time by scanning this array
+3. Performing the actual deletion in O(k) time once the correct filter is found
+
+We assume BUCKET_SIZE and NUM_HASHES are constants, similar to assumptions made for hash tables where we treat the load factor as constant.
+
+# Task 2 Part E: Dynamic Bloom Filter Analysis
+
+## Complexity Changes from Basic to Dynamic Bloom Filter
+
+The transition from a basic Bloom filter to a dynamic Bloom filter introduces several significant changes in complexity:
+
+### Space Complexity
+- Basic Bloom Filter: O(m) bits where m is the number of buckets
+- Dynamic Bloom Filter: O(s * m * c) where:
+  - s is the number of filters
+  - m is the number of buckets per filter
+  - c is bits per counter (constant)
+The space complexity increases linearly with the number of filters, but this allows for unlimited growth.
+
+### Time Complexity
+- Insertion: O(k) → O(k)
+  - Remains constant as we only insert into the latest filter
+  - Filter creation (O(1)) amortized over insertions
+- Lookup: O(k) → O(k + s)
+  - Must check O(s) filters in worst case
+  - Each filter requires O(k) hash computations
+  - Using birdNames array for O(s) tracking improves average case
+- Deletion: O(k) → O(k + s)
+  - O(s) to find the correct filter using birdNames array
+  - O(k) to perform the actual deletion in that filter
+
+### Implementation of O(k + s) Deletion
+Our implementation achieves O(k + s) deletion by:
+1. Using an O(s) space birdNames array to track which filter contains each bird
+2. Finding the correct filter in O(s) time by scanning this array
+3. Performing the actual deletion in O(k) time once the correct filter is found
+
+We assume BUCKET_SIZE and NUM_HASHES are constants, similar to assumptions made for hash tables where we treat the load factor as constant.
