@@ -143,6 +143,7 @@ int checkCBF(bf* birds, char* nextName, unsigned int hashNum) {
     return cbfCount(birds, nextName, hashNum) > 0;
 }
 
+
 // Check if a list of birds is in the CBF
 void birdCheckCBF(bf* birds, char* fname, unsigned int hashNum){
     FILE *inFile = fopen(fname, "r");
@@ -202,4 +203,3 @@ void deleteBirdsCBF(bf *birds, char *deletefile, unsigned int hashNum) {
     free(nextName);
     fclose(inFile);
 }
-

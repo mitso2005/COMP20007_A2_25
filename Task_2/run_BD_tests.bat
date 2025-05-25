@@ -9,7 +9,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo Running Part B (Counting Bloom Filter) basic test...
+echo Running Part B (Counting Bloom Filter) basic test...k 
 echo =============================================
 birds C datafiles/t2b_data_1.txt test_cases/t2_1.txt delete_cases/t2_delete_1.txt
 
