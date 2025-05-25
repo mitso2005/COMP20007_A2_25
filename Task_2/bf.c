@@ -3,12 +3,13 @@
  *
  * Created for COMP20007 Design of Algorithms 2025
  * Template written by Danielle Jayanthy <d.jayanthy@unimelb.edu.au>
- * Implementation by YOUR NAME HERE.
+ * Implementation by DIMITRIOS PETRAKIS.
  */
 
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-
 #include "bit.h"
 #include "hash.h"
 #include "utils.h"
@@ -40,18 +41,48 @@ int standardBF(char *datafile, char *testfile) {
 
 /* This function adds an element to the bloom filter */
 void addBF(bf* birds, char* nextName, unsigned int* hashNum) {
-    // FILL-IN
+    unsigned int hashes[NUM_HASHES];
+    // Compute k hash values for the bird name
+    uh1(nextName, birds->bfBits, *hashNum, hashes);
+    // Set each bit in the Bloom filter
+    for (unsigned int i = 0; i < *hashNum; i++) {
+        bitOn(birds->arr, hashes[i]);
+    }
 }
 
  /* This function checks if a bird with name “nextName” is in the bloom filter */
 int checkBF(bf* birds, char* nextName, unsigned int hashNum) {
-    // FILL-IN
+    unsigned int hashes[NUM_HASHES];
+    uh1(nextName, birds->bfBits, hashNum, hashes);
+    for (unsigned int i = 0; i < hashNum; i++) {
+        if (!checkBit(birds->arr, hashes[i])) {
+            return 0; // Definitely not in the list
+        }
+    }
+    return 1; // Possibly in the list
 }
 
 /* This function reads a list of birds from the file “fname”        
  * and prints out if each of the birds is in the bloom filter */
 void birdCheckBF(bf* birds, char* fname, unsigned int hashNum){
-    // FILL-IN
+    FILE *inFile = fopen(fname, "r");
+    assert(inFile);
+
+    size_t bufsize = MAXBIRDNAME;
+    char* nextName = (char *)malloc(bufsize * sizeof(char));
+    assert(nextName);
+
+    while (fgets(nextName, (int)bufsize, inFile) != NULL) {
+        // Remove newline
+        size_t len = strlen(nextName);
+        if (len > 0 && nextName[len-1] == '\n') {
+            nextName[len-1] = '\0';
+        }
+        int result = checkBF(birds, nextName, hashNum);
+        printf("%-30s : %s\n", nextName, result ? "Possibly in the list" : "Definitely not in the list");
+    }
+    free(nextName);
+    fclose(inFile);
 }
 
 /* This function reads birds in and adds them to the bloom filter. 
@@ -81,7 +112,7 @@ void birdReadBF(bf* birds, char* fname, unsigned int* hashNum){
     assert(nextName);
     while (getline(&nextName, &bufsize, inFile) != -1) {
         nextName[strlen(nextName)-1] = '\0';
-        //printf("%s\n", nextName);
+        // printf("%s\n", nextName);
         addBF(birds, nextName, hashNum);
         // debugging: 
         // printBF(birds);
@@ -89,4 +120,3 @@ void birdReadBF(bf* birds, char* fname, unsigned int* hashNum){
     fclose(inFile);
     free(nextName);
 }
-

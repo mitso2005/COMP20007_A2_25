@@ -1,0 +1,3 @@
+
+echo Compiling birds.c and dependencies...
+gcc -Wall -o birds birds.c cbf.c dbf.c hash.c bit.c utils.c bf_stub.c -lm -g

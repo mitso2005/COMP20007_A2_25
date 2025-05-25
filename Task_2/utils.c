@@ -14,13 +14,20 @@ struct bloomFilter {
 /* This function calculates the number of bits you need to store n birds and maintain a false positive rate of fp_rate.
  * It then finds the closest prime number larger, to ensure our hash table size is a prime number. */
 int calc_m(int n, double fp_rate) {
-    int m = (int) ((double) -n*log(fp_rate) / (double) (log(2)*log(2)))+1;
-    FILE *fp;
-    char buffer[MAXBIRDNAME];
-    sprintf(buffer, "awk '$1 > %d' auxillary_data/primes.txt | head -n 1", m);
-    fp = popen(buffer, "r");
-    fscanf(fp, "%d", &m);
-    pclose(fp);
+    int m = (int)((double)-n * log(fp_rate) / (double)(log(2) * log(2))) + 1;
+    
+    // Simple prime number finder - find next prime after m
+    while (1) {
+        int isPrime = 1;
+        for (int i = 2; i * i <= m; i++) {
+            if (m % i == 0) {
+                isPrime = 0;
+                break;
+            }
+        }
+        if (isPrime) break;
+        m++;
+    }
     return m;
 }
 

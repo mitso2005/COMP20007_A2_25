@@ -69,11 +69,13 @@ int birdDeleteDBF(bf* birds, char* nextName, unsigned int* hashNum) {
 // Count how many times a bird has been seen in the DBF
 int dbfCount(dbf* birds, char* nextName, unsigned int hashNum) {
     // FILL-IN
+    return 0;
 }
 
 // Check if a bird is in a specific Bloom Filter
 int checkDBF(bf* birds, char* nextName, unsigned int hashNum) {
     // FILL-IN
+    return 0;
 }
 
 // Check if a list of birds is in the DBF
