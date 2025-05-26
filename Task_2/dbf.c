@@ -76,58 +76,91 @@ static dbfNode* findBirdNode(dbf* birds, const char* name) {
     return NULL;
 }
 
+// Helper: free a single dbfNode
+static void freeDBFNode(dbfNode* node) {
+    if (!node) return;
+
+    // Free all bird name strings in this node
+    if (node->birdNames) {
+        for (int i = 0; i < node->currentBirds; i++) {
+            free(node->birdNames[i]);
+        }
+        free(node->birdNames);
+    }
+
+    // Free first and last bird if they exist
+    free(node->first_bird);
+    free(node->last_bird);
+
+    // Free the Bloom filter
+    if (node->filter) {
+        if (node->filter->arr) {
+            free(node->filter->arr);
+        }
+        free(node->filter);
+    }
+
+    // Finally, free the node itself
+    free(node);
+}
+
+// Helper: free the entire DBF linked list
+static void freeDBF(dbf* birds) {
+    if (!birds) return;
+
+    dbfNode* node = birds->head;
+    while (node) {
+        dbfNode* next = node->next;
+        freeDBFNode(node);
+        node = next;
+    }
+
+    // Free the main dbf structure itself
+    free(birds);
+}
+
+
 int dynamicBF(char *datafile, char *testfile, char *deletefile) {
-    unsigned int hashNum = NUM_HASHES; 
+    unsigned int hashNum = NUM_HASHES;
     dbf* birds = (dbf *) malloc(sizeof(dbf));
     assert(birds);
     birds->fp_rate = 0;
     birds->maxBirds = 0;
     birds->head = NULL;
+
     printf("\t ...Reading... \n");
     birdReadDBF(birds, datafile, &hashNum);
+
     printf("\t ...Checking... \n");
     birdCheckDBF(birds, testfile, hashNum);
+
     printf("\t ...Deleting... \n");
     deleteBirdsDBF(birds, deletefile, hashNum);
-    // Free all memory
-    dbfNode* node = birds->head;
-    while (node) {
-        dbfNode* next = node->next;
-        for (int i = 0; i < node->currentBirds; i++) {
-            free(node->birdNames[i]);
-        }
-        free(node->birdNames);
-        free(node->filter->arr);
-        free(node->filter);
-        free(node);
-        node = next;
-    }
-    free(birds);
+
+    // Clean up all memory allocations
+    freeDBF(birds);
+
     return 0;
 }
 
 // add an item to a specific bloom filter in the DBF
-int addDBF(bf* birds_bf, char* nextName, unsigned int* hashNum) {
-    dbf* birds = (dbf*)birds_bf;
-    if (!birds->head) {
-        birds->head = createNewNode(birds->maxBirds, birds->fp_rate);
+int addDBF(bf* birds, char* nextName, unsigned int* hashNum) {
+    unsigned int hashes[*hashNum];
+    uh1(nextName, birds->bfBits / BUCKET_SIZE, *hashNum, hashes);
+   
+    // check whether a bird has all unique hashes
+    int* viewed = calloc(birds->bfBits / BUCKET_SIZE, sizeof(int));
+    assert(viewed);
+    for (int i = 0; i < *hashNum; i++) {
+        if (!viewed[hashes[i]]) {
+            viewed[hashes[i]] = 1;
+            if (addBits(birds->arr, hashes[i])) {
+                free(viewed);
+                return 1;
+            }
+        } 
     }
-    // Always insert into the last filter
-    dbfNode* node = birds->head;
-    while (node->next) {
-        node = node->next;
-    }
-    // If current filter is full, create a new filter and insert into that
-    if (node->currentBirds >= node->maxCapacity) {
-        node->next = createNewNode(birds->maxBirds, birds->fp_rate);
-        node = node->next;
-    }
-    if (addCBF(node->filter, nextName, hashNum)) {
-        return 1; // Overflow occurred
-    }
-    node->birdNames[node->currentBirds] = strdup(nextName);
-    node->currentBirds++;
-    node->filter->numBirds++;
+    free(viewed);
     return 0;
 }
 
@@ -255,16 +288,22 @@ void birdReadDBF(dbf* birds, char* fname, unsigned int* hashNum) {
             curr->first_bird = strdup(nextName);
         }
 
-        if (addDBF((bf*)birds, nextName, hashNum)) {
+        // Pass the current node's filter to addDBF
+        if (addDBF(curr->filter, nextName, hashNum)) {
             // Handle overflow
             if (prev_name) {
                 curr->last_bird = strdup(prev_name);
                 curr->next = createNewNode(birds->maxBirds, birds->fp_rate);
                 curr = curr->next;
                 curr->first_bird = strdup(nextName);
-                addDBF((bf*)birds, nextName, hashNum);
+                addDBF(curr->filter, nextName, hashNum);
             }
         }
+        
+        // Update tracking information
+        curr->birdNames[curr->currentBirds] = strdup(nextName);
+        curr->currentBirds++;
+        curr->filter->numBirds++;
         
         free(prev_name);
         prev_name = strdup(nextName);

@@ -44,68 +44,11 @@ The modification from Part A to Part B introduces a factor of c to both space co
 
 # Task 2 Part E: Dynamic Bloom Filter Analysis
 
-## Complexity Changes from Basic to Dynamic Bloom Filter
+The transition from a basic Bloom filter (Part A) to a dynamic Bloom filter (Part D) introduces significant complexity changes to handle unlimited growth while maintaining efficient operations. While Part A's basic Bloom filter has fixed O(m) space complexity and O(k) operations, our dynamic implementation scales with the number of filters s while optimizing for practical performance.
 
-The transition from a basic Bloom filter to a dynamic Bloom filter introduces several significant changes in complexity:
+Our space complexity increases from O(m) to O(s * m * c), where s is the number of filters, m is buckets per filter, and c is bits per counter. However, this allows for unlimited growth compared to Part A's fixed-size limitation. For time complexity, insertion remains O(k) as we only insert into the latest filter, but queries become O(k * s) worst case since we may need to check all filters. We achieve O(k + s) deletion by:
+1. Using birdNames arrays to track filter membership in O(s) time
+2. Maintaining first_bird/last_bird pointers to quickly determine relevant filters
+3. Only processing unique hash values to reduce redundant operations
 
-### Space Complexity
-- Basic Bloom Filter: O(m) bits where m is the number of buckets
-- Dynamic Bloom Filter: O(s * m * c) where:
-  - s is the number of filters
-  - m is the number of buckets per filter
-  - c is bits per counter (constant)
-The space complexity increases linearly with the number of filters, but this allows for unlimited growth.
-
-### Time Complexity
-- Insertion: O(k) → O(k)
-  - Remains constant as we only insert into the latest filter
-  - Filter creation (O(1)) amortized over insertions
-- Lookup: O(k) → O(k + s)
-  - Must check O(s) filters in worst case
-  - Each filter requires O(k) hash computations
-  - Using birdNames array for O(s) tracking improves average case
-- Deletion: O(k) → O(k + s)
-  - O(s) to find the correct filter using birdNames array
-  - O(k) to perform the actual deletion in that filter
-
-### Implementation of O(k + s) Deletion
-Our implementation achieves O(k + s) deletion by:
-1. Using an O(s) space birdNames array to track which filter contains each bird
-2. Finding the correct filter in O(s) time by scanning this array
-3. Performing the actual deletion in O(k) time once the correct filter is found
-
-We assume BUCKET_SIZE and NUM_HASHES are constants, similar to assumptions made for hash tables where we treat the load factor as constant.
-
-# Task 2 Part E: Dynamic Bloom Filter Analysis
-
-## Complexity Changes from Basic to Dynamic Bloom Filter
-
-The transition from a basic Bloom filter to a dynamic Bloom filter introduces several significant changes in complexity:
-
-### Space Complexity
-- Basic Bloom Filter: O(m) bits where m is the number of buckets
-- Dynamic Bloom Filter: O(s * m * c) where:
-  - s is the number of filters
-  - m is the number of buckets per filter
-  - c is bits per counter (constant)
-The space complexity increases linearly with the number of filters, but this allows for unlimited growth.
-
-### Time Complexity
-- Insertion: O(k) → O(k)
-  - Remains constant as we only insert into the latest filter
-  - Filter creation (O(1)) amortized over insertions
-- Lookup: O(k) → O(k + s)
-  - Must check O(s) filters in worst case
-  - Each filter requires O(k) hash computations
-  - Using birdNames array for O(s) tracking improves average case
-- Deletion: O(k) → O(k + s)
-  - O(s) to find the correct filter using birdNames array
-  - O(k) to perform the actual deletion in that filter
-
-### Implementation of O(k + s) Deletion
-Our implementation achieves O(k + s) deletion by:
-1. Using an O(s) space birdNames array to track which filter contains each bird
-2. Finding the correct filter in O(s) time by scanning this array
-3. Performing the actual deletion in O(k) time once the correct filter is found
-
-We assume BUCKET_SIZE and NUM_HASHES are constants, similar to assumptions made for hash tables where we treat the load factor as constant.
+Similar to hash tables where we consider load factor constant, we treat BUCKET_SIZE (c) and NUM_HASHES (k) as constants. This makes our space-time tradeoff worthwhile: we get unlimited capacity and efficient deletion at the cost of some space overhead for tracking metadata.
