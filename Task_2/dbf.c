@@ -48,17 +48,41 @@ typedef struct dynamicBFNode dbfNode;
 // Helper: create a new counting bloom filter node
 static dbfNode* createNewNode(int capacity, double fp_rate) {
     dbfNode* node = malloc(sizeof(dbfNode));
-    assert(node);
+    if (!node) return NULL;
+
     node->filter = malloc(sizeof(bf));
+    if (!node->filter) {
+        free(node);
+        return NULL;
+    }
+
     node->filter->bfBits = calc_m(capacity, fp_rate) * BUCKET_SIZE;
     node->filter->fp_rate = fp_rate;
     node->filter->numBirds = 0;
+    
     unsigned int numInts = (node->filter->bfBits + 31) / 32;
     node->filter->arr = calloc(numInts, sizeof(unsigned int));
+    if (!node->filter->arr) {
+        free(node->filter);
+        free(node);
+        return NULL;
+    }
+
+    node->birdNames = malloc(capacity * sizeof(char*));
+    if (!node->birdNames) {
+        free(node->filter->arr);
+        free(node->filter);
+        free(node);
+        return NULL;
+    }
+
     node->currentBirds = 0;
     node->maxCapacity = capacity;
-    node->birdNames = malloc(capacity * sizeof(char*));
     node->next = NULL;
+    node->first_bird = NULL;
+    node->last_bird = NULL;
+    node->bird_count = 0;
+
     return node;
 }
 
@@ -137,6 +161,9 @@ int dynamicBF(char *datafile, char *testfile, char *deletefile) {
     printf("\t ...Deleting... \n");
     deleteBirdsDBF(birds, deletefile, hashNum);
 
+    // Clean up hash function resources
+    uh1(NULL, 0, hashNum, NULL);
+    
     // Clean up all memory allocations
     freeDBF(birds);
 
@@ -254,15 +281,23 @@ void birdCheckDBF(dbf* birds, char* fname, unsigned int hashNum) {
 // Read in the birds and add them to the DBF
 void birdReadDBF(dbf* birds, char* fname, unsigned int* hashNum) {
     FILE *inFile = fopen(fname, "r");
-    assert(inFile);
+    if (!inFile) {
+        fprintf(stderr, "Failed to open file: %s\n", fname);
+        return;
+    }
 
-    assert(fscanf(inFile, "%d %lf\n", &birds->maxBirds, &birds->fp_rate) == 2);
+    if (fscanf(inFile, "%d %lf\n", &birds->maxBirds, &birds->fp_rate) != 2) {
+        fprintf(stderr, "Failed to read header information\n");
+        fclose(inFile);
+        return;
+    }
 
     // Initialize first filter
     dbfNode* head = createNewNode(birds->maxBirds, birds->fp_rate);
-    head->first_bird = NULL;
-    head->last_bird = NULL;
-    head->bird_count = 0;
+    if (!head) {
+        fclose(inFile);
+        return;
+    }
     birds->head = head;
     
     char nextName[MAXBIRDNAME];

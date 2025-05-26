@@ -6,19 +6,12 @@
  * Implementation by DIMITRIOS PETRAKIS.
  */
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "bit.h"
 #include "hash.h"
 #include "utils.h"
 #include "birds.h"
 
-// Forward declarations
-int cbfCount(bf* birds, char* nextName, unsigned int hashNum);
-int addCBF(bf* birds, char* nextName, unsigned int* hashNum);
-int birdDeleteCBF(bf* birds, char* nextName, unsigned int* hashNum);
+int cbfCount(bf* birds, char* name, unsigned int hashNum);
 
 // Our counting Bloom Filter
 struct bloomFilter {
@@ -40,10 +33,13 @@ int countingBF(char *datafile, char *testfile, char* deletefile) {
     printf("\t ...Deleting... \n");
     deleteBirdsCBF(birds, deletefile, hashNum);
 
-    // free allocated memory
+    // Clean up properly
     uh1(NULL, 0, hashNum, NULL);
-    free(birds->arr);
+    if (birds->arr) {
+        free(birds->arr);
+    }
     free(birds);
+    
     return 0;
 }
 

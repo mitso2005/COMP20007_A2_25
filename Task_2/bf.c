@@ -7,9 +7,9 @@
  */
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "bit.h"
 #include "hash.h"
 #include "utils.h"
@@ -25,55 +25,54 @@ struct bloomFilter {
 /* The main function of this file */
 int standardBF(char *datafile, char *testfile) {
     unsigned int hashNum = NUM_HASHES; 
-    bf* birds;
-    birds = (bf*) malloc(sizeof(bf));
+    bf* birds = malloc(sizeof(bf));
+    assert(birds);
+
     printf("\t ...Reading... \n");
     birdReadBF(birds, datafile, &hashNum);
+
     printf("\t ...Checking... \n");
     birdCheckBF(birds, testfile, hashNum);
-
-    // free allocated memory
-    uh1(NULL, 0, hashNum, NULL);
-    free(birds->arr);
+    
+    // Clean up properly
+    uh1(NULL, 0, hashNum, NULL);  // Clean up hash function resources
+    if (birds->arr) {
+        free(birds->arr);
+    }
     free(birds);
+
     return 0;
 }
 
 /* This function adds an element to the bloom filter */
 void addBF(bf* birds, char* nextName, unsigned int* hashNum) {
     unsigned int hashes[NUM_HASHES];
-    // Compute k hash values for the bird name
     uh1(nextName, birds->bfBits, *hashNum, hashes);
-    // Set each bit in the Bloom filter
     for (unsigned int i = 0; i < *hashNum; i++) {
         bitOn(birds->arr, hashes[i]);
     }
 }
 
- /* This function checks if a bird with name “nextName” is in the bloom filter */
 int checkBF(bf* birds, char* nextName, unsigned int hashNum) {
     unsigned int hashes[NUM_HASHES];
     uh1(nextName, birds->bfBits, hashNum, hashes);
     for (unsigned int i = 0; i < hashNum; i++) {
         if (!checkBit(birds->arr, hashes[i])) {
-            return 0; // Definitely not in the list
+            return 0;
         }
     }
-    return 1; // Possibly in the list
+    return 1;
 }
 
-/* This function reads a list of birds from the file “fname”        
- * and prints out if each of the birds is in the bloom filter */
 void birdCheckBF(bf* birds, char* fname, unsigned int hashNum){
     FILE *inFile = fopen(fname, "r");
     assert(inFile);
 
     size_t bufsize = MAXBIRDNAME;
-    char* nextName = (char *)malloc(bufsize * sizeof(char));
+    char* nextName = malloc(bufsize * sizeof(char));
     assert(nextName);
 
     while (fgets(nextName, (int)bufsize, inFile) != NULL) {
-        // Remove newline
         size_t len = strlen(nextName);
         if (len > 0 && nextName[len-1] == '\n') {
             nextName[len-1] = '\0';
@@ -81,42 +80,34 @@ void birdCheckBF(bf* birds, char* fname, unsigned int hashNum){
         int result = checkBF(birds, nextName, hashNum);
         printf("%-30s : %s\n", nextName, result ? "Possibly in the list" : "Definitely not in the list");
     }
+
     free(nextName);
     fclose(inFile);
 }
 
-/* This function reads birds in and adds them to the bloom filter. 
-   This is given to you for the standard Bloom Filter. */
 void birdReadBF(bf* birds, char* fname, unsigned int* hashNum){
     FILE *inFile = fopen(fname, "r");
     assert(inFile);
 
-    // First line comprises of number of birds, false positive rate
     assert(fscanf(inFile, "%d %lf\n", &birds->numBirds, &birds->fp_rate) == 2);
 
-    // calculate the number of bits we need for this number of birds
     birds->bfBits = calc_m(birds->numBirds, birds->fp_rate);
 
-    // debugging: 
-    // printf("%d\n", birds->bfBits);
-
-    // our bloom filter will have exactly this many bits
-    birds->arr = (unsigned int*) malloc(birds->bfBits);
+    // Calculate number of bits needed, then compute words needed
+    unsigned int words = (birds->bfBits + sizeof(unsigned int) * 8 - 1) / (sizeof(unsigned int) * 8);
+    birds->arr = calloc(words, sizeof(unsigned int));  // safer: zero-initialized
     assert(birds->arr);
-    
-    initBits(birds->arr, birds->bfBits);
 
-    size_t bufsize = MAXBIRDNAME;
-    char* nextName;
-    nextName = (char *)malloc(bufsize * sizeof(char));
-    assert(nextName);
+    char *nextName = NULL;
+    size_t bufsize = 0;
     while (getline(&nextName, &bufsize, inFile) != -1) {
-        nextName[strlen(nextName)-1] = '\0';
-        // printf("%s\n", nextName);
+        size_t len = strlen(nextName);
+        if (len > 0 && nextName[len-1] == '\n') {
+            nextName[len-1] = '\0';
+        }
         addBF(birds, nextName, hashNum);
-        // debugging: 
-        // printBF(birds);
     }
-    fclose(inFile);
+
     free(nextName);
+    fclose(inFile);
 }

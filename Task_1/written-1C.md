@@ -4,90 +4,122 @@
 
 ### 1. State Representation
 
-Each state in the dynamic programming (DP) solution is represented by a tuple `(lake, time)`, where:
-- `lake` is the current lake the eel is at (an integer from 0 to N-1).
-- `time` is the number of days remaining until the breeding season (an integer from 0 to C).
+Each state in the dynamic programming solution is represented by `dp[lake][time]`, where:
+- `lake` ∈ {0, 1, ..., N-1} represents the current lake ID
+- `time` ∈ {0, 1, ..., C} represents the remaining time until breeding season
 
-The DP table `dp[lake][time]` stores the **maximum fat** the eel can have at lake `lake` with `time` days remaining.  
-Auxiliary tables `parent[lake][time]` and `parentTime[lake][time]` are used to reconstruct the optimal path.
+**State Value:** `dp[lake][time]` stores the maximum fat achievable when at `lake` with `time` days remaining, or -1 if the state is unreachable.
 
-**Fat Management:**  
-- When transitioning between states, fat is updated by subtracting the river traversal cost and adding the fat gain/loss of the destination lake.
-- Fat is capped at the maximum allowed (`F`) and transitions that would result in fat ≤ 0 are not allowed.
-- Transitions are only allowed if the eel has enough fat to survive the river and does not exceed the time limit.
+**Constraint Management:**
+- **Fat bounds:** All transitions ensure fat remains in (0, F], where transitions resulting in fat ≤ 0 are rejected, and fat > F is capped at F
+- **Time constraint:** Transitions are only valid if sufficient time remains (time ≥ travel_cost)
+- **Survivability:** Transitions require current_fat > travel_cost to survive the journey
+
+**Auxiliary structures:** 
+- `parent[lake][time]` and `parentTime[lake][time]` store backtracking information for path reconstruction
 
 ### 2. Recurrence
 
-Let `dp[lake][time]` be the maximum fat achievable at `lake` with `time` days remaining.
+**Base Case:**
+```
+dp[S][C] = K if K > 0, otherwise -1
+All other dp[lake][time] = -1 initially
+```
 
-**Base Case:**  
-- At the start: `dp[S][C] = K` (if `K > 0`), where `S` is the starting lake, `C` is the time limit, and `K` is the initial fat.
+**Recurrence Relation:**
+For each state `dp[u][t]` where `dp[u][t] > 0`, and for each outgoing edge (u,v) with cost w:
 
-**Recurrence:**  
-For each lake `u`, time `t`, and for each outgoing river from `u` to `v` with cost `w`:
-- If `dp[u][t] != -1` and `t >= 1` and `dp[u][t] > w`:
-    - `fatAfterTravel = dp[u][t] - w`
-    - `fatAfterEating = fatAfterTravel + gain[v]`
-    - If `fatAfterEating > 0`, set `fatAfterEating = min(fatAfterEating, F)`
-    - If `dp[v][t-1] < fatAfterEating`, then:
-        - `dp[v][t-1] = fatAfterEating`
-        - Update parent pointers for backtrace
+```
+if t ≥ 1 and dp[u][t] > w:
+    fat_after_travel = dp[u][t] - w
+    fat_after_eating = fat_after_travel + gain[v]
+    
+    if fat_after_eating > 0:
+        fat_final = min(fat_after_eating, F)
+        if dp[v][t-1] < fat_final:
+            dp[v][t-1] = fat_final
+            parent[v][t-1] = u
+            parentTime[v][t-1] = t
+```
 
-**Justification:**  
-- The recurrence ensures that at each step, the eel only transitions to valid states (enough fat, within time).
-- The DP table always stores the best (maximum) fat for each state.
+**Correctness Justification:**
+- **Optimality:** The recurrence explores all valid transitions and keeps only the maximum fat for each state
+- **Feasibility:** All constraints (fat survival, time limits, maximum capacity) are enforced during transitions
+- **Completeness:** Processing in reverse time order (C down to 1) ensures all dependencies are resolved before being used
 
 ### 3. Time Complexity
 
-Let:
-- `N` = number of lakes
-- `C` = time limit
-- `M` = number of rivers (edges)
-- `D` = maximum out-degree (rivers per lake)
+**Variables:**
+- N = number of lakes
+- C = time limit  
+- M = number of rivers (total edges)
+- Let E = total number of outgoing edges across all lakes = M
 
-**Time Complexity:**  
-- For each time step (C), each lake (N), and each outgoing river (D):  
-  O(N * C * D)
-- Since D ≤ N in the worst case,  
-  **O(N * C * N) = O(N^2 * C)**
+**Time Complexity:** O(C × E) = O(C × M)
+- Outer loop: C iterations (time steps)
+- Middle loop: N iterations (lakes), but only processes reachable states
+- Inner loop: Variable per lake based on out-degree, totaling E operations across all lakes per time step
 
-**Space Complexity:**  
-- The DP and parent tables are O(N * C) each.
+**Space Complexity:** O(N × C)
+- Three 2D arrays: dp, parent, parentTime, each of size N × (C+1)
+
+**Note:** While the naive bound is O(N²C) (assuming each lake connects to all others), the actual complexity is O(CM) where M is the number of edges in the input graph.
 
 ### 4. Backtrace
 
-**Location of Final Answer:**  
-- The optimal solution is found by checking all `dp[O][t]` for the destination lake `O` and all valid times `t` (0 ≤ t ≤ C).
-- The best fat and earliest arrival time are selected.
+**Final Answer Location:**
+The optimal solution is found by examining all `dp[O][t]` for destination lake O across all time values t ∈ {0, 1, ..., C}:
+```
+bestFat = max{dp[O][t] : t ∈ {0,1,...,C}, dp[O][t] ≠ -1}
+bestTime = min{t : dp[O][t] = bestFat}  // Prefer earlier arrival
+```
 
-**Reconstruction:**  
-- Starting from the best `(O, t)`, use the `parent` and `parentTime` tables to trace back through the states until reaching the origin.
-- The path is then reversed to produce the correct order.
-
----
-
-## Part B: Differences from Part A
-
-### State Representation
-
-- The state is still `(lake, time)`, but **time now decreases by the river cost** (not always 1).
-- When traversing a river with cost `w`, the time decreases by `w` instead of 1.
-
-### Recurrence
-
-- The recurrence is modified so that for each river with cost `w`, the transition is only allowed if `t >= w`, and the next state is at `timeAfter = t - w`.
-
-### Time Complexity
-
-- The time complexity remains **O(N^2 * C)**, as the number of possible states and transitions is unchanged, but the time decrement per transition is variable.
-
-### Backtrace
-
-- The backtrace process is unchanged, except that time steps may decrease by more than 1 per transition.
+**Path Reconstruction:**
+Starting from state (O, bestTime), use parent pointers to trace backwards:
+1. Initialize: current = O, time = bestTime
+2. While current ≠ -1:
+   - Add current to path
+   - prev = parent[current][time]
+   - time = parentTime[current][time]  
+   - current = prev
+3. Reverse the collected path to get forward direction
 
 ---
 
-## Summary
+## Part B: Modifications for Variable Travel Time
 
-- The DP solution efficiently finds the optimal path and fat reserves for the eel, respecting all constraints.
-- Part B only changes the time decrement per river, but the overall structure and complexity remain the same.
+### Key Difference
+In Part B, **travel time equals the fat cost** of traversing a river, rather than being fixed at 1 day.
+
+### Modified Elements
+
+**Recurrence (Updated):**
+The transition condition changes from `t ≥ 1` to `t ≥ w`, and the next state becomes `t - w`:
+
+```
+if t ≥ w and dp[u][t] > w:
+    fat_after_travel = dp[u][t] - w  
+    fat_after_eating = fat_after_travel + gain[v]
+    
+    if fat_after_eating > 0:
+        fat_final = min(fat_after_eating, F)
+        if dp[v][t-w] < fat_final:  // Note: t-w instead of t-1
+            dp[v][t-w] = fat_final
+            parent[v][t-w] = u
+            parentTime[v][t-w] = t
+```
+
+**Time Complexity:**
+Remains O(C × M) as the total number of state transitions is bounded by the same factors, though individual transitions may consume more time units.
+
+### Unchanged Elements
+- State representation remains `dp[lake][time]`
+- Base case and constraint management unchanged
+- Space complexity remains O(N × C)
+- Backtrace procedure identical
+
+---
+
+## Implementation Notes
+
+The provided code correctly implements both variants using a unified approach where `timeCost = (part == PART_A) ? 1 : travelCost`, demonstrating the minimal modification required between the two parts while maintaining the same algorithmic structure and complexity bounds.
